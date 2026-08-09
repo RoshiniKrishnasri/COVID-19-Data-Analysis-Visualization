@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}
+500 Internal Error | COVID Analytics Dashboard
+{% endblock %}
+
+{% block content %}
+
+<div class="container d-flex flex-column justify-content-center align-items-center py-5" style="min-height: 60vh;">
+
+    <div class="text-center p-5 rounded-4 shadow-sm bg-white" style="max-width: 500px;">
+
+        <i class="fa-solid fa-server fa-5x text-danger mb-4 opacity-75"></i>
+
+        <h1 class="display-1 fw-bold text-dark mb-0">
+
+            500
+
+        </h1>
+
+        <h3 class="text-muted fw-light mb-4">
+
+            Internal Server Error
+
+        </h3>
+
+        <p class="text-secondary mb-4">
+            Oops, something went wrong on our end! We are working to fix the issue. Please try again later.
+        </p>
+
+        <a href="{{ url_for('home') }}" class="btn btn-danger btn-lg px-4 rounded-pill shadow-sm">
+
+            <i class="fa-solid fa-rotate-right me-2"></i>
+            Refresh Page
+
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

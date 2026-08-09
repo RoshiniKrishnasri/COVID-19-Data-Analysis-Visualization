@@ -1,0 +1,627 @@
+<!-- =============================================================================
+templates/dashboard.html
+Production-Level Dashboard Page
+COVID-19 Data Analysis & Visualization Flask Application
+============================================================================= -->
+
+{% extends "base.html" %}
+
+<!-- =============================================================================
+PAGE TITLE
+============================================================================= -->
+
+{% block title %}
+Dashboard | COVID Analytics Dashboard
+{% endblock %}
+
+<!-- =============================================================================
+PAGE CONTENT
+============================================================================= -->
+
+{% block content %}
+
+<!-- Custom Styling for Executive Dashboard -->
+<style>
+    .executive-header {
+        font-family: 'Poppins', sans-serif;
+        color: #0f172a;
+    }
+    .executive-card {
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .executive-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+    .gradient-card-blue {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 1px solid #bae6fd;
+    }
+    .gradient-card-green {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border: 1px solid #bbf7d0;
+    }
+    .gradient-card-yellow {
+        background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+        border: 1px solid #fef08a;
+    }
+    .gradient-card-red {
+        background: linear-gradient(135deg, #fdf2f2 0%, #fde2e2 100%);
+        border: 1px solid #fecaca;
+    }
+    .kpi-title {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: #64748b;
+    }
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 0.2rem;
+    }
+    .kpi-desc {
+        font-size: 0.85rem;
+        color: #475569;
+        margin-bottom: 0;
+    }
+    .insight-card {
+        border-left: 5px solid #0d6efd;
+    }
+    .insight-card.risk {
+        border-left-color: #dc3545;
+    }
+    .insight-card.health {
+        border-left-color: #ffc107;
+    }
+    .insight-card.strat {
+        border-left-color: #198754;
+    }
+    .executive-summary-card {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: #f8fafc;
+        border: none;
+        border-radius: 16px;
+    }
+    .chart-container-executive {
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+    }
+    /* Country Selector */
+    .country-selector-bar {
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 1rem 0;
+    }
+    .country-select-wrap {
+        position: relative;
+        max-width: 380px;
+    }
+    .country-select-wrap .select-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #3b82f6;
+        font-size: 1rem;
+        pointer-events: none;
+        z-index: 2;
+    }
+    #countrySelect {
+        padding-left: 2.6rem;
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #0f172a;
+        background: #f8fafc;
+        cursor: pointer;
+        height: 48px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        appearance: none;
+    }
+    #countrySelect:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        outline: none;
+        background: #ffffff;
+    }
+    .country-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        border: 1px solid #bfdbfe;
+        border-radius: 20px;
+        padding: 0.35rem 0.9rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #1d4ed8;
+        transition: all 0.3s ease;
+    }
+    .card-updating {
+        opacity: 0.5;
+        transition: opacity 0.2s ease;
+    }
+    .card-updated {
+        opacity: 1;
+        transition: opacity 0.3s ease;
+    }
+
+    /* =========================================================================
+       DARK MODE OVERRIDES
+    ========================================================================= */
+    body.dark-mode .executive-header,
+    body.dark-mode h2,
+    body.dark-mode h4,
+    body.dark-mode h5,
+    body.dark-mode [style*="color:#0f172a"],
+    body.dark-mode [style*="color: #0f172a"],
+    body.dark-mode .text-dark {
+        color: #f8fafc !important;
+    }
+
+    body.dark-mode [style*="color:#64748b"],
+    body.dark-mode [style*="color: #64748b"] {
+        color: #cbd5e1 !important;
+    }
+
+    body.dark-mode .executive-card,
+    body.dark-mode .country-selector-bar,
+    body.dark-mode .bg-white,
+    body.dark-mode [style*="background: #ffffff"],
+    body.dark-mode .card {
+        background-color: #1e293b !important;
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    body.dark-mode section[style*="background"],
+    body.dark-mode section.bg-white {
+        background-color: transparent !important;
+        background: transparent !important;
+    }
+    
+    body.dark-mode #countrySelect {
+        background-color: #0f172a !important;
+        color: #f8fafc !important;
+        border-color: #334155 !important;
+    }
+</style>
+
+<!-- =============================================================================
+PAGE HEADER
+============================================================================= -->
+
+<section class="py-5 border-bottom">
+
+    <div class="container text-center">
+
+        <span class="badge bg-primary px-3 py-2 mb-3">
+
+            Executive Analytics
+
+        </span>
+
+        <h1 class="fw-bold display-5 mb-2 executive-header">
+
+            Pandemic Pattern Intelligence
+
+        </h1>
+
+        <p class="lead text-muted mx-auto mb-0" style="max-width: 800px;">
+
+            Understanding global COVID-19 transmission behavior using machine learning.
+
+        </p>
+
+    </div>
+
+</section>
+
+<!-- =============================================================================
+COUNTRY SELECTOR BAR
+============================================================================= -->
+
+<div class="country-selector-bar shadow-sm">
+    <div class="container">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+
+            <div class="d-flex align-items-center gap-3">
+                <div class="country-select-wrap flex-grow-1">
+                    <i class="fa-solid fa-globe select-icon"></i>
+                    <select id="countrySelect" class="form-select w-100" aria-label="Select Country">
+                        <option value="global" selected>🌍 Global View — All Countries</option>
+                        {% for country in countries %}
+                        <option value="{{ country }}">{{ country }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button id="resetCountryBtn" class="btn btn-outline-primary btn-sm px-3 d-none" style="border-radius:10px; height:48px; font-weight:600;">
+                    <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                </button>
+            </div>
+
+            <div id="selectedCountryBadge" class="country-badge d-none">
+                <i class="fa-solid fa-location-dot"></i>
+                <span id="selectedCountryName">—</span>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- =============================================================================
+GLOBAL PANDEMIC SUMMARY CARDS
+============================================================================= -->
+
+<section class="py-5" style="background: #f8fafc;">
+
+    <div class="container">
+
+        <div class="text-center mb-5">
+            <h2 class="fw-bold" id="summaryTitle" style="font-family: 'Poppins', sans-serif; color: #0f172a;">Global Pandemic Summary</h2>
+            <p class="text-muted" id="summarySubtitle">Latest worldwide COVID-19 statistics from real-time public datasets.</p>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Card 1: Total New Cases -->
+            <div class="col-lg-3 col-md-6">
+                <div class="card p-4 h-100 border-0 shadow-sm" style="border-radius: 16px; background: #ffffff;">
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                        <div style="min-width: 0; word-break: break-word;">
+                            <p class="mb-1" id="labelCases" style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748b;">Total New Cases</p>
+                            <h2 id="valCases" style="font-size:1.8rem; font-weight:800; color:#0f172a; margin-bottom:0;">{{ "{:,}".format(summary.total_cases) }}</h2>
+                        </div>
+                        <div style="font-size: 3rem; color: #3b82f6;">
+                            <i class="fa-solid fa-virus-covid"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Total New Deaths -->
+            <div class="col-lg-3 col-md-6">
+                <div class="card p-4 h-100 border-0 shadow-sm" style="border-radius: 16px; background: #ffffff;">
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                        <div style="min-width: 0; word-break: break-word;">
+                            <p class="mb-1" id="labelDeaths" style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748b;">Total New Deaths</p>
+                            <h2 id="valDeaths" style="font-size:1.8rem; font-weight:800; color:#0f172a; margin-bottom:0;">{{ "{:,}".format(summary.total_deaths) }}</h2>
+                        </div>
+                        <div style="font-size: 3rem; color: #ef4444;">
+                            <i class="fa-solid fa-heart-crack"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Total Tests -->
+            <div class="col-lg-3 col-md-6">
+                <div class="card p-4 h-100 border-0 shadow-sm" style="border-radius: 16px; background: #ffffff;">
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                        <div style="min-width: 0; word-break: break-word;">
+                            <p class="mb-1" id="labelTests" style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748b;">Total Tests</p>
+                            <h2 id="valTests" style="font-size:1.8rem; font-weight:800; color:#0f172a; margin-bottom:0;">{{ "{:,}".format(summary.total_tests) }}</h2>
+                        </div>
+                        <div style="font-size: 3rem; color: #16a34a;">
+                            <i class="fa-solid fa-flask"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Countries Tracked -->
+            <div class="col-lg-3 col-md-6">
+                <div class="card p-4 h-100 border-0 shadow-sm" style="border-radius: 16px; background: #ffffff;">
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                        <div style="min-width: 0; word-break: break-word;">
+                            <p class="mb-1" id="labelCountries" style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#64748b;">Countries Tracked</p>
+                            <h2 id="valCountries" style="font-size:1.8rem; font-weight:800; color:#0f172a; margin-bottom:0;">{{ summary.countries }}</h2>
+                        </div>
+                        <div style="font-size: 3rem; color: #f59e0b;">
+                            <i class="fa-solid fa-earth-americas"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =============================================================================
+MAIN VISUALIZATION SECTION
+============================================================================= -->
+
+<section class="py-4">
+
+    <div class="container">
+
+        <div class="card border-0 p-4 bg-white chart-container-executive mb-5">
+
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+
+                <div>
+
+                    <h4 class="fw-bold mb-1 text-dark">K-Means Cluster Scatter Plot</h4>
+
+                    <p class="text-muted small mb-0">Daily cases (X-axis) vs. Daily deaths (Y-axis), colored by cluster. Centroids highlighted as black diamonds.</p>
+
+                </div>
+
+                <div class="text-end">
+
+                    <span class="badge bg-secondary p-2">Sampled: Max 5,000 points</span>
+
+                </div>
+
+            </div>
+
+            <div style="position: relative; height: 500px;">
+
+                <canvas id="kmeansScatterChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =============================================================================
+ADDITIONAL VISUALIZATIONS
+============================================================================= -->
+
+<section class="py-5" style="background: #f1f5f9;">
+    <div class="container">
+
+        <div class="text-center mb-5">
+            <span class="badge bg-primary px-3 py-2 mb-2">Advanced Analytics</span>
+            <h2 class="fw-bold" style="font-family:'Poppins',sans-serif; color:#0f172a;">Deep Data Insights</h2>
+            <p class="text-muted">Multi-dimensional analysis of global COVID-19 transmission patterns.</p>
+        </div>
+
+        <!-- ROW 1: Moving Average + Correlation -->
+        <div class="row g-4 mb-4">
+
+            <!-- 1. 7-Day Moving Average Trend Chart -->
+            <div class="col-lg-8">
+                <div class="card border-0 p-4 h-100 bg-white" style="border-radius:20px; box-shadow:0 4px 24px rgba(15,23,42,0.06);">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">
+                                <i class="fa-solid fa-chart-line text-primary me-2"></i>7-Day Moving Average Trend
+                            </h5>
+                            <p class="text-muted small mb-0">Global daily cases &amp; deaths smoothed over a 7-day rolling window.</p>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2" style="border-radius:10px; font-size:0.75rem;">Global</span>
+                    </div>
+                    <div style="position:relative; height:320px;">
+                        <canvas id="movingAvgChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Correlation Heatmap -->
+            <div class="col-lg-4">
+                <div class="card border-0 p-4 h-100 bg-white" style="border-radius:20px; box-shadow:0 4px 24px rgba(15,23,42,0.06);">
+                    <div class="mb-3">
+                        <h5 class="fw-bold mb-1 text-dark">
+                            <i class="fa-solid fa-fire text-danger me-2"></i>Correlation Heatmap
+                        </h5>
+                        <p class="text-muted small mb-0">Pearson correlation between key COVID metrics.</p>
+                    </div>
+                    <div style="position:relative; height:320px;">
+                        <canvas id="correlationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ROW 2: Bubble Chart (full width) -->
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="card border-0 p-4 bg-white" style="border-radius:20px; box-shadow:0 4px 24px rgba(15,23,42,0.06);">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">
+                                <i class="fa-solid fa-circle-dot text-success me-2"></i>Comparison Graph of Countries in the Bubble Chart
+                            </h5>
+                            <p class="text-muted small mb-0">
+                                X-axis: Daily Tests &nbsp;·&nbsp; Y-axis: Daily Cases &nbsp;·&nbsp;
+                                <strong>Bubble size:</strong> Daily Deaths &nbsp;·&nbsp;
+                                <strong>Color:</strong> K-Means Cluster
+                            </p>
+                        </div>
+                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2" style="border-radius:10px; font-size:0.75rem;">Max 2,000 pts</span>
+                    </div>
+                    <div style="position:relative; height:420px;">
+                        <canvas id="bubbleChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+============================================================================= -->
+
+<section class="py-5 bg-white">
+
+    <div class="container">
+
+        <div class="text-center mb-5">
+
+            <span class="badge bg-secondary px-3 py-2 mb-2">Detailed Analytics</span>
+
+            <h2 class="fw-bold">Pandemic Intelligence Insights</h2>
+
+            <p class="text-muted">Targeted takeaways derived from scikit-learn K-Means model behavior.</p>
+
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Card 1: Dominant Pandemic State -->
+            <div class="col-md-6">
+
+                <div class="card p-4 h-100 executive-card insight-card">
+
+                    <h5 class="fw-bold mb-3 text-primary">
+
+                        <i class="fa-solid fa-square-poll-vertical me-2"></i>Dominant Pandemic State
+
+                    </h5>
+
+                    <p class="text-muted small mb-0" style="line-height: 1.6;">
+
+                        Cluster 4 accounts for the majority of observations, suggesting that most countries experienced prolonged periods of relatively low transmission.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- Card 2: Rare High-Risk Events -->
+            <div class="col-md-6">
+
+                <div class="card p-4 h-100 executive-card insight-card risk">
+
+                    <h5 class="fw-bold mb-3 text-danger">
+
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>Rare High-Risk Events
+
+                    </h5>
+
+                    <p class="text-muted small mb-0" style="line-height: 1.6;">
+
+                        Cluster 1 contains very few records, indicating that extreme case-death spikes were uncommon but significant events during the pandemic.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- Card 3: Cluster Distribution Health -->
+            <div class="col-md-6">
+
+                <div class="card p-4 h-100 executive-card insight-card health">
+
+                    <h5 class="fw-bold mb-3 text-warning">
+
+                        <i class="fa-solid fa-chart-line-down me-2"></i>Cluster Distribution Health
+
+                    </h5>
+
+                    <p class="text-muted small mb-0" style="line-height: 1.6;">
+
+                        The clustering results are imbalanced, revealing that pandemic conditions were not evenly distributed. Most observations belonged to stable phases, while severe outbreaks occurred less frequently.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <!-- Card 4: Strategic Interpretation -->
+            <div class="col-md-6">
+
+                <div class="card p-4 h-100 executive-card insight-card strat">
+
+                    <h5 class="fw-bold mb-3 text-success">
+
+                        <i class="fa-solid fa-shield-virus me-2"></i>Strategic Interpretation
+
+                    </h5>
+
+                    <p class="text-muted small mb-0" style="line-height: 1.6;">
+
+                        The machine learning model successfully separates normal transmission periods from unusual outbreak events, enabling policymakers and researchers to identify rare but critical situations that may require rapid intervention.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =============================================================================
+EXECUTIVE SUMMARY SECTION
+============================================================================= -->
+
+<section class="py-5 border-top">
+
+    <div class="container">
+
+        <div class="card p-4 shadow-lg executive-summary-card">
+
+            <div class="d-flex align-items-center gap-3 mb-3">
+
+                <div class="bg-info bg-opacity-25 p-2 rounded text-info">
+
+                    <i class="fa-solid fa-chart-line fa-lg"></i>
+
+                </div>
+
+                <h5 class="fw-bold mb-0 text-white">Executive Clustering Summary</h5>
+
+            </div>
+
+            <p class="mb-0 small" style="line-height: 1.7; opacity: 0.95;">
+
+                The clustering analysis indicates that global COVID-19 activity was dominated by low-transmission phases, while severe outbreaks formed small but clearly distinguishable groups. The high silhouette score of 0.93 demonstrates excellent cluster separation and supports the reliability of the identified pandemic patterns for decision-making and public health analysis.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- Bind unused template variables in hidden tags to maintain route safety -->
+<div class="d-none" id="insightTotalRecords"></div>
+<div class="d-none" id="insightNumClusters"></div>
+<div class="d-none" id="insightSilhouetteScore"></div>
+<div class="d-none" id="insightLargestCluster"></div>
+<div class="d-none" id="insightSmallestCluster"></div>
+<div class="d-none" id="insightBalanceStatus"></div>
+<div class="d-none" id="insightInterpretation"></div>
+
+<!-- Bind trigger button for compatibility -->
+<button id="refreshKMeansBtn" class="d-none"></button>
+
+{% endblock %}
+
+<!-- =============================================================================
+PAGE SCRIPTS
+============================================================================= -->
+
+{% block scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+{% endblock %}

@@ -1,0 +1,1211 @@
+<!-- =============================================================================
+templates/analysis.html
+Analysis Page — 6 Visualization Sections + Checkbox Quiz
+COVID-19 Data Analysis & Visualization Flask Application
+============================================================================= -->
+
+{% extends "base.html" %}
+
+<!-- =============================================================================
+PAGE TITLE
+============================================================================= -->
+
+{% block title %}
+Analysis | COVID Analytics Dashboard
+{% endblock %}
+
+<!-- =============================================================================
+EXTRA HEAD — PAGE-SPECIFIC STYLES
+============================================================================= -->
+
+{% block extra_head %}
+<style>
+
+    /* =========================================================================
+       ANALYSIS PAGE CUSTOM STYLES
+    ========================================================================= */
+
+    .analysis-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+        color: #f8fafc;
+        padding: 4rem 0 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .analysis-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -30%;
+        width: 160%;
+        height: 200%;
+        background: radial-gradient(
+            ellipse at 30% 50%,
+            rgba(59, 130, 246, 0.12) 0%,
+            transparent 60%
+        );
+        pointer-events: none;
+    }
+
+    .analysis-hero h1 {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 800;
+        font-size: 2.6rem;
+        letter-spacing: -0.02em;
+    }
+
+    .analysis-hero .lead {
+        color: #94a3b8;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    /* =========================================================================
+       VISUALIZATION SECTIONS
+    ========================================================================= */
+
+    .viz-section {
+        padding: 4rem 0;
+        border-bottom: 1px solid #e2e8f0;
+        transition: background 0.3s ease;
+    }
+
+    .viz-section:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .viz-section:nth-child(odd) {
+        background: #ffffff;
+    }
+
+    .viz-section:hover {
+        background: #f0f4ff;
+    }
+
+    .viz-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .viz-number.n1 { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .viz-number.n2 { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .viz-number.n3 { background: linear-gradient(135deg, #10b981, #059669); }
+    .viz-number.n4 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .viz-number.n5 { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .viz-number.n6 { background: linear-gradient(135deg, #ec4899, #db2777); }
+
+    .viz-title {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        font-size: 1.5rem;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+
+    .viz-desc {
+        color: #64748b;
+        font-size: 0.95rem;
+        line-height: 1.7;
+        margin-bottom: 0;
+    }
+
+    .viz-img-wrapper {
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow:
+            0 4px 6px -1px rgba(0,0,0,0.08),
+            0 10px 30px -5px rgba(0,0,0,0.12);
+        transition: transform 0.35s cubic-bezier(0.4,0,0.2,1),
+                    box-shadow 0.35s ease;
+        position: relative;
+        background: #f1f5f9;
+    }
+
+    .viz-img-wrapper:hover {
+        transform: translateY(-6px) scale(1.01);
+        box-shadow:
+            0 20px 40px -10px rgba(0,0,0,0.18),
+            0 8px 20px -5px rgba(0,0,0,0.1);
+    }
+
+    .viz-img-wrapper img {
+        width: 100%;
+        height: auto;
+        display: block;
+        transition: transform 0.4s ease;
+    }
+
+    .viz-img-wrapper:hover img {
+        transform: scale(1.03);
+    }
+
+    .viz-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .viz-badge.trend   { background: #dbeafe; color: #1d4ed8; }
+    .viz-badge.deaths   { background: #fde2e2; color: #b91c1c; }
+    .viz-badge.hotspot  { background: #d1fae5; color: #065f46; }
+    .viz-badge.vaccine  { background: #fef3c7; color: #92400e; }
+    .viz-badge.ranking  { background: #ede9fe; color: #5b21b6; }
+    .viz-badge.mortality{ background: #fce7f3; color: #9d174d; }
+
+    /* =========================================================================
+       CHECKBOX TOGGLE
+    ========================================================================= */
+
+    .quiz-toggle-box {
+        background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+        border: 2px solid #bfdbfe;
+        border-radius: 20px;
+        padding: 2rem 2.5rem;
+        max-width: 600px;
+        margin: 0 auto;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .quiz-toggle-box:hover {
+        border-color: #93c5fd;
+        box-shadow: 0 8px 30px rgba(59, 130, 246, 0.12);
+    }
+
+    .quiz-toggle-box .form-check-input {
+        width: 3em;
+        height: 1.5em;
+        cursor: pointer;
+        border: 2px solid #93c5fd;
+    }
+
+    .quiz-toggle-box .form-check-input:checked {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+    }
+
+    .quiz-toggle-box .form-check-label {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        font-size: 1.15rem;
+        color: #0f172a;
+        cursor: pointer;
+    }
+
+    /* =========================================================================
+       QUIZ SECTION
+    ========================================================================= */
+
+    .quiz-section {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    .quiz-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .quiz-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .quiz-q-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: #fff;
+        font-weight: 800;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .quiz-q-title {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        font-size: 1.05rem;
+        color: #0f172a;
+        line-height: 1.5;
+    }
+
+    .quiz-card .form-check-input:checked {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+    }
+
+    .quiz-card .form-check-label {
+        color: #475569;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .quiz-card .form-check-label:hover {
+        color: #0f172a;
+    }
+
+    .quiz-viz-ref {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #3b82f6;
+        background: #eff6ff;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+    }
+
+    /* Score result */
+    .score-display {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        color: #f8fafc;
+    }
+
+    .score-circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 900;
+        font-family: 'Poppins', sans-serif;
+        margin: 0 auto 1rem;
+    }
+
+    .score-circle.perfect { background: linear-gradient(135deg, #10b981, #059669); }
+    .score-circle.good    { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .score-circle.avg     { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .score-circle.low     { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+    /* Fade-in animation */
+    @keyframes fadeSlideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-slide-up {
+        animation: fadeSlideUp 0.6s ease forwards;
+    }
+
+    /* =========================================================================
+       DARK MODE OVERRIDES
+    ========================================================================= */
+    body.dark-mode .viz-section:nth-child(even),
+    body.dark-mode .viz-section:nth-child(odd),
+    body.dark-mode .quiz-section {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+
+    body.dark-mode .viz-section:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    body.dark-mode .viz-img-wrapper,
+    body.dark-mode .quiz-card,
+    body.dark-mode .quiz-toggle-box,
+    body.dark-mode [style*="background: #fff"],
+    body.dark-mode .bg-white {
+        background: #1e293b !important;
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    body.dark-mode .viz-title,
+    body.dark-mode .quiz-q-title,
+    body.dark-mode .quiz-toggle-box .form-check-label,
+    body.dark-mode [style*="color:#0f172a"],
+    body.dark-mode [style*="color: #0f172a"],
+    body.dark-mode h2 {
+        color: #f8fafc !important;
+    }
+
+    body.dark-mode .viz-desc,
+    body.dark-mode .quiz-card .form-check-label,
+    body.dark-mode .quiz-card .form-check-label:hover,
+    body.dark-mode [style*="color:#64748b"],
+    body.dark-mode [style*="color: #64748b"] {
+        color: #cbd5e1 !important;
+    }
+
+</style>
+{% endblock %}
+
+<!-- =============================================================================
+PAGE CONTENT
+============================================================================= -->
+
+{% block content %}
+
+<!-- =============================================================================
+HERO HEADER
+============================================================================= -->
+
+<section class="analysis-hero">
+    <div class="container">
+        <div class="text-center position-relative" style="z-index: 1;">
+
+            <span class="badge bg-primary bg-opacity-25 text-info px-3 py-2 mb-3" style="font-size: 0.8rem; font-weight: 700; letter-spacing: 0.05em;">
+                <i class="fa-solid fa-chart-column me-1"></i>
+                VISUAL DATA STORYTELLING
+            </span>
+
+            <h1 class="mb-3">
+                COVID-19 Data Analysis<br>
+                <span style="background: linear-gradient(90deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">& Visualization Insights</span>
+            </h1>
+
+            <p class="lead">
+                Explore 6 key analytical visualizations generated from the COVID-19 dataset,
+                then test your understanding with an interactive knowledge check quiz.
+            </p>
+
+        </div>
+    </div>
+</section>
+
+<!-- =============================================================================
+SECTION 1: GLOBAL CASES TREND
+============================================================================= -->
+
+<section class="viz-section" id="vizSection1">
+    <div class="container">
+        <div class="row align-items-center gy-5">
+
+            <!-- Left: Content -->
+            <div class="col-lg-5">
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="viz-number n1">01</span>
+                    <span class="viz-badge trend">
+                        <i class="fa-solid fa-chart-line"></i> Trend Analysis
+                    </span>
+                </div>
+
+                <h2 class="viz-title">Global Cases Trend</h2>
+
+                <p class="viz-desc">
+                    This time-series visualization tracks the daily progression of
+                    confirmed COVID-19 cases worldwide. It reveals distinct infection
+                    waves, peak periods, and the overall trajectory of the pandemic
+                    across multiple months. The chart helps identify when transmission
+                    accelerated or decelerated globally.
+                </p>
+
+                <div class="mt-4">
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fa-solid fa-check-circle text-success mt-1"></i>
+                        <small class="text-muted">Daily new cases aggregated globally</small>
+                    </div>
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fa-solid fa-check-circle text-success mt-1"></i>
+                        <small class="text-muted">Identifies pandemic wave patterns</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <i class="fa-solid fa-check-circle text-success mt-1"></i>
+                        <small class="text-muted">Peak reached on September 18, 2020</small>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right: Image -->
+            <div class="col-lg-7">
+                <div class="viz-img-wrapper" style="padding: 1.5rem; background: #fff;">
+                    <canvas id="casesTrendChart" height="280"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- =============================================================================
+SECTION 2: GLOBAL DEATHS TREND
+============================================================================= -->
+
+<section class="viz-section" id="vizSection2">
+    <div class="container">
+        <div class="row align-items-center gy-5 flex-lg-row-reverse">
+
+            <!-- Right: Content -->
+            <div class="col-lg-5">
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="viz-number n2">02</span>
+                    <span class="viz-badge deaths">
+                        <i class="fa-solid fa-skull-crossbones"></i> Mortality Trend
+                    </span>
+                </div>
+
+                <h2 class="viz-title">Global Deaths Trend</h2>
+
+                <p class="viz-desc">
+                    This chart tracks daily COVID-19 fatalities across all countries
+                    over time. It highlights the severity of different pandemic waves
+                    and reveals how mortality rates varied between the first and
+                    subsequent surges. The data reflects the devastating human cost
+                    of the pandemic at its worst.
+                </p>
+
+                <div class="mt-4">
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fa-solid fa-check-circle text-danger mt-1"></i>
+                        <small class="text-muted">Daily death toll tracked globally</small>
+                    </div>
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fa-solid fa-check-circle text-danger mt-1"></i>
+                        <small class="text-muted">Correlation between cases and deaths lag</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <i class="fa-solid fa-check-circle text-danger mt-1"></i>
+                        <small class="text-muted">Multiple mortality peaks observed</small>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Left: Image -->
+            <div class="col-lg-7">
+                <div class="viz-img-wrapper" style="padding: 1.5rem; background: #fff;">
+                    <canvas id="deathsTrendChart" height="280"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- =============================================================================
+SECTION 3: COVID HOTSPOTS
+============================================================================= -->
+
+<section class="viz-section" id="vizSection3">
+    <div class="container">
+        <div class="row align-items-center gy-5">
+
+            <!-- Left: Content -->
+            <div class="col-lg-5">
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="viz-number n3">03</span>
+                    <span class="viz-badge hotspot">
+                        <i class="fa-solid fa-map-location-dot"></i> Hotspot Detection
+                    </span>
+                </div>
+
+                <h2 class="viz-title">COVID-19 Hotspot Regions</h2>
+
+                <p class="viz-desc">
+                    This visualization identifies the countries and regions that
+                    emerged as major COVID-19 hotspots. It highlights geographic
+                    areas with the highest infection densities and helps understand
+                    which populations faced disproportionate impact based on
+                    population density, mobility, and healthcare infrastructure.
+                </p>
+
+                <div class="mt-4">
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fa-solid fa-check-circle text-success mt-1"></i>
+                        <small class="text-muted">Geographic hotspot identification</small>
+                    </div>
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fa-solid fa-check-circle text-success mt-1"></i>
+                        <small class="text-muted">Population density correlation</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <i class="fa-solid fa-check-circle text-success mt-1"></i>
+                        <small class="text-muted">USA, India, Brazil among top hotspots</small>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right: Image -->
+            <div class="col-lg-7">
+                <div class="viz-img-wrapper" style="padding: 1.5rem; background: #fff;">
+                    <canvas id="hotspotsChart" height="280"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- =============================================================================
+SECTION 4: GLOBAL VACCINATION TREND
+============================================================================= -->
+
+<section class="viz-section" id="vizSection4">
+    <div class="container">
+        <div class="row align-items-center gy-5 flex-lg-row-reverse">
+
+            <!-- Right: Content -->
+            <div class="col-lg-5">
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="viz-number n4">04</span>
+                    <span class="viz-badge vaccine">
+                        <i class="fa-solid fa-flask"></i> Testing Data
+                    </span>
+                </div>
+
+                <h2 class="viz-title">Global Testing Trend</h2>
+
+                <p class="viz-desc">
+                    This chart visualizes the global testing rollout over time,
+                    showing how testing campaigns progressed across countries.
+                    It highlights the acceleration of testing capacity and
+                    correlates testing coverage with subsequent case tracking
+                    in various regions.
+                </p>
+
+                <div class="mt-4">
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fa-solid fa-check-circle text-warning mt-1"></i>
+                        <small class="text-muted">Testing rollout timeline</small>
+                    </div>
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fa-solid fa-check-circle text-warning mt-1"></i>
+                        <small class="text-muted">Global testing capacity progress</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <i class="fa-solid fa-check-circle text-warning mt-1"></i>
+                        <small class="text-muted">Test availability impact on case counts</small>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Left: Chart -->
+            <div class="col-lg-7">
+                <div class="viz-img-wrapper" style="padding: 1.5rem; background: #fff;">
+                    <canvas id="testsTrendChart" height="280"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- =============================================================================
+SECTION 5: TOP COUNTRIES BY CASES
+============================================================================= -->
+
+<section class="viz-section" id="vizSection5">
+    <div class="container">
+        <div class="row align-items-center gy-5">
+
+            <!-- Left: Content -->
+            <div class="col-lg-5">
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="viz-number n5">05</span>
+                    <span class="viz-badge ranking">
+                        <i class="fa-solid fa-ranking-star"></i> Country Rankings
+                    </span>
+                </div>
+
+                <h2 class="viz-title">Top Countries by Cases</h2>
+
+                <p class="viz-desc">
+                    This bar chart ranks the countries with the highest total
+                    COVID-19 case counts. It provides a comparative view of how
+                    different nations were affected and highlights the disparity
+                    in infection rates between the most and least affected
+                    countries globally.
+                </p>
+
+                <div class="mt-4">
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fa-solid fa-check-circle text-primary mt-1"></i>
+                        <small class="text-muted">Comparative country-level analysis</small>
+                    </div>
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fa-solid fa-check-circle text-primary mt-1"></i>
+                        <small class="text-muted">India reported over 93K daily cases at peak</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <i class="fa-solid fa-check-circle text-primary mt-1"></i>
+                        <small class="text-muted">Top 10 country comparison</small>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right: Image -->
+            <div class="col-lg-7">
+                <div class="viz-img-wrapper" style="padding: 1.5rem; background: #fff;">
+                    <canvas id="topCountriesChart" height="280"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- =============================================================================
+SECTION 6: MORTALITY RATE CHART
+============================================================================= -->
+
+<section class="viz-section" id="vizSection6">
+    <div class="container">
+        <div class="row align-items-center gy-5 flex-lg-row-reverse">
+
+            <!-- Right: Content -->
+            <div class="col-lg-5">
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="viz-number n6">06</span>
+                    <span class="viz-badge mortality">
+                        <i class="fa-solid fa-heart-pulse"></i> Mortality Analysis
+                    </span>
+                </div>
+
+                <h2 class="viz-title">Mortality Rate Analysis</h2>
+
+                <p class="viz-desc">
+                    This chart examines the case fatality rate (CFR) across different
+                    countries, revealing which nations had the highest death-to-case
+                    ratios. Higher mortality rates often correlated with overwhelmed
+                    healthcare systems, older population demographics, and delayed
+                    testing capabilities.
+                </p>
+
+                <div class="mt-4">
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fa-solid fa-check-circle text-danger mt-1"></i>
+                        <small class="text-muted">Case fatality rate (deaths ÷ cases × 100)</small>
+                    </div>
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fa-solid fa-check-circle text-danger mt-1"></i>
+                        <small class="text-muted">Healthcare system stress indicator</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <i class="fa-solid fa-check-circle text-danger mt-1"></i>
+                        <small class="text-muted">Highlights high-risk demographics</small>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Left: Image -->
+            <div class="col-lg-7">
+                <div class="viz-img-wrapper" style="padding: 1.5rem; background: #fff;">
+                    <canvas id="mortalityChart" height="280"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- =============================================================================
+QUIZ TOGGLE CHECKBOX
+============================================================================= -->
+
+<section class="py-5 bg-white">
+    <div class="container text-center">
+
+        <div class="quiz-toggle-box">
+
+            <div class="form-check form-switch d-flex align-items-center justify-content-center gap-3 m-0">
+
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="toggleQuizCheckbox"
+                >
+
+                <label
+                    class="form-check-label mb-0"
+                    for="toggleQuizCheckbox"
+                >
+                    <i class="fa-solid fa-graduation-cap text-primary me-1"></i>
+                    Enable Knowledge Check Quiz
+                </label>
+
+            </div>
+
+            <p class="text-muted small mb-0 mt-3">
+                <i class="fa-solid fa-circle-info me-1"></i>
+                Toggle this switch to unlock 6 quiz questions — one for each visualization above.
+            </p>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- =============================================================================
+QUIZ SECTION (Hidden by default)
+============================================================================= -->
+
+<section id="quizSection" class="quiz-section py-5 border-top" style="display: none;">
+    <div class="container" style="max-width: 920px;">
+
+        <!-- Quiz Header -->
+        <div class="text-center mb-5">
+
+            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 mb-3" style="font-size: 0.8rem; font-weight: 700;">
+                <i class="fa-solid fa-brain me-1"></i> INTERACTIVE QUIZ
+            </span>
+
+            <h2 class="fw-bold" style="font-family: 'Poppins', sans-serif; color: #0f172a;">
+                Test Your Pandemic Data Insights
+            </h2>
+
+            <p class="text-muted">
+                Answer one question per visualization to check your understanding of the COVID-19 analytical insights.
+            </p>
+
+        </div>
+
+        <!-- Quiz Form -->
+        <form id="quizForm">
+
+            <!-- ================================================================
+            Q1 — Based on Section 1: Global Cases Trend
+            ================================================================= -->
+
+            <div class="quiz-card mb-4 fade-slide-up" style="animation-delay: 0.1s;">
+
+                <div class="quiz-viz-ref">
+                    <i class="fa-solid fa-chart-line"></i> Based on: Global Cases Trend
+                </div>
+
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <span class="quiz-q-number">1</span>
+                    <p class="quiz-q-title mb-0">
+                        On what date did daily global COVID-19 new cases peak at 627,316?
+                    </p>
+                </div>
+
+                <div class="ps-5">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q1" id="q1a" value="a">
+                        <label class="form-check-label" for="q1a">September 11, 2020</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q1" id="q1b" value="b">
+                        <label class="form-check-label" for="q1b">September 18, 2020</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q1" id="q1c" value="c">
+                        <label class="form-check-label" for="q1c">September 1, 2020</label>
+                    </div>
+                </div>
+
+                <div id="q1Feedback" class="mt-2 ps-5 small fw-semibold"></div>
+
+            </div>
+
+            <!-- ================================================================
+            Q2 — Based on Section 2: Global Deaths Trend
+            ================================================================= -->
+
+            <div class="quiz-card mb-4 fade-slide-up" style="animation-delay: 0.2s;">
+
+                <div class="quiz-viz-ref">
+                    <i class="fa-solid fa-skull-crossbones"></i> Based on: Global Deaths Trend
+                </div>
+
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <span class="quiz-q-number">2</span>
+                    <p class="quiz-q-title mb-0">
+                        What observation does the global deaths trend reveal about the pandemic waves?
+                    </p>
+                </div>
+
+                <div class="ps-5">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q2" id="q2a" value="a">
+                        <label class="form-check-label" for="q2a">Death peaks occur simultaneously with case peaks</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q2" id="q2b" value="b">
+                        <label class="form-check-label" for="q2b">Death peaks typically lag behind case peaks by 1–3 weeks</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q2" id="q2c" value="c">
+                        <label class="form-check-label" for="q2c">Deaths remained constant throughout the pandemic</label>
+                    </div>
+                </div>
+
+                <div id="q2Feedback" class="mt-2 ps-5 small fw-semibold"></div>
+
+            </div>
+
+            <!-- ================================================================
+            Q3 — Based on Section 3: COVID Hotspots
+            ================================================================= -->
+
+            <div class="quiz-card mb-4 fade-slide-up" style="animation-delay: 0.3s;">
+
+                <div class="quiz-viz-ref">
+                    <i class="fa-solid fa-map-location-dot"></i> Based on: COVID Hotspot Regions
+                </div>
+
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <span class="quiz-q-number">3</span>
+                    <p class="quiz-q-title mb-0">
+                        Which factors most contributed to certain regions becoming COVID-19 hotspots?
+                    </p>
+                </div>
+
+                <div class="ps-5">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q3" id="q3a" value="a">
+                        <label class="form-check-label" for="q3a">Only temperature and climate conditions</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q3" id="q3b" value="b">
+                        <label class="form-check-label" for="q3b">Population density, mobility, and healthcare access</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q3" id="q3c" value="c">
+                        <label class="form-check-label" for="q3c">Social media usage and internet penetration</label>
+                    </div>
+                </div>
+
+                <div id="q3Feedback" class="mt-2 ps-5 small fw-semibold"></div>
+
+            </div>
+
+            <!-- ================================================================
+            Q4 — Based on Section 4: Vaccination Trend
+            ================================================================= -->
+
+            <div class="quiz-card mb-4 fade-slide-up" style="animation-delay: 0.4s;">
+
+                <div class="quiz-viz-ref">
+                    <i class="fa-solid fa-syringe"></i> Based on: Global Vaccination Trend
+                </div>
+
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <span class="quiz-q-number">4</span>
+                    <p class="quiz-q-title mb-0">
+                        What impact did the vaccination rollout have on COVID-19 case trends?
+                    </p>
+                </div>
+
+                <div class="ps-5">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q4" id="q4a" value="a">
+                        <label class="form-check-label" for="q4a">Vaccination had no observable impact on case rates</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q4" id="q4b" value="b">
+                        <label class="form-check-label" for="q4b">Higher vaccination coverage correlated with reduced case severity</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q4" id="q4c" value="c">
+                        <label class="form-check-label" for="q4c">Vaccination increased case numbers</label>
+                    </div>
+                </div>
+
+                <div id="q4Feedback" class="mt-2 ps-5 small fw-semibold"></div>
+
+            </div>
+
+            <!-- ================================================================
+            Q5 — Based on Section 5: Top Countries by Cases
+            ================================================================= -->
+
+            <div class="quiz-card mb-4 fade-slide-up" style="animation-delay: 0.5s;">
+
+                <div class="quiz-viz-ref">
+                    <i class="fa-solid fa-ranking-star"></i> Based on: Top Countries by Cases
+                </div>
+
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <span class="quiz-q-number">5</span>
+                    <p class="quiz-q-title mb-0">
+                        Which country reported the highest daily new case count (over 93K cases)?
+                    </p>
+                </div>
+
+                <div class="ps-5">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q5" id="q5a" value="a">
+                        <label class="form-check-label" for="q5a">India</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q5" id="q5b" value="b">
+                        <label class="form-check-label" for="q5b">United States</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q5" id="q5c" value="c">
+                        <label class="form-check-label" for="q5c">Brazil</label>
+                    </div>
+                </div>
+
+                <div id="q5Feedback" class="mt-2 ps-5 small fw-semibold"></div>
+
+            </div>
+
+            <!-- ================================================================
+            Q6 — Based on Section 6: Mortality Rate
+            ================================================================= -->
+
+            <div class="quiz-card mb-4 fade-slide-up" style="animation-delay: 0.6s;">
+
+                <div class="quiz-viz-ref">
+                    <i class="fa-solid fa-heart-pulse"></i> Based on: Mortality Rate Analysis
+                </div>
+
+                <div class="d-flex align-items-start gap-3 mb-3">
+                    <span class="quiz-q-number">6</span>
+                    <p class="quiz-q-title mb-0">
+                        What does the mortality rate (Case Fatality Rate) measure in the context of COVID-19?
+                    </p>
+                </div>
+
+                <div class="ps-5">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q6" id="q6a" value="a">
+                        <label class="form-check-label" for="q6a">Percentage of population infected by COVID-19</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q6" id="q6b" value="b">
+                        <label class="form-check-label" for="q6b">Percentage of confirmed cases that resulted in death</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q6" id="q6c" value="c">
+                        <label class="form-check-label" for="q6c">Total number of deaths in a country</label>
+                    </div>
+                </div>
+
+                <div id="q6Feedback" class="mt-2 ps-5 small fw-semibold"></div>
+
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-5">
+
+                <button type="button" id="submitQuiz" class="btn btn-primary btn-lg px-5 shadow" style="border-radius: 14px; font-weight: 700;">
+                    <i class="fa-solid fa-square-check me-2"></i>Submit All Answers
+                </button>
+
+                <button type="button" id="resetQuiz" class="btn btn-outline-secondary btn-lg px-4 ms-2 shadow-sm d-none" style="border-radius: 14px; font-weight: 600;">
+                    <i class="fa-solid fa-rotate-left me-1"></i>Reset Quiz
+                </button>
+
+            </div>
+
+        </form>
+
+        <!-- Quiz Result Display -->
+        <div id="quizResult" class="mt-5 d-none">
+            <div class="score-display text-center">
+
+                <div id="scoreCircle" class="score-circle">
+                    <span id="scoreValue">0/6</span>
+                </div>
+
+                <h4 class="fw-bold mb-2" id="quizScoreText">Score: 0 / 6</h4>
+                <p class="mb-0 small" style="opacity: 0.85;" id="quizFeedbackText"></p>
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}
+
+<!-- =============================================================================
+PAGE SCRIPTS
+============================================================================= -->
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // =========================================================================
+    // QUIZ TOGGLE
+    // =========================================================================
+
+    const toggleCheckbox = document.getElementById('toggleQuizCheckbox');
+    const quizSection = document.getElementById('quizSection');
+
+    if (toggleCheckbox && quizSection) {
+        toggleCheckbox.addEventListener('change', function() {
+            if (toggleCheckbox.checked) {
+                quizSection.style.display = 'block';
+                setTimeout(function() {
+                    quizSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            } else {
+                quizSection.style.display = 'none';
+            }
+        });
+    }
+
+    // =========================================================================
+    // QUIZ ANSWERS
+    // =========================================================================
+
+    const correctAnswers = {
+        q1: 'b',  // September 18, 2020
+        q2: 'b',  // Death peaks lag behind case peaks
+        q3: 'b',  // Population density, mobility, healthcare access
+        q4: 'b',  // Higher vaccination = reduced severity
+        q5: 'a',  // India
+        q6: 'b'   // Percentage of confirmed cases that resulted in death
+    };
+
+    const explanations = {
+        q1: {
+            correct: "Correct! Global COVID-19 daily new cases peaked at 627,316 on September 18, 2020.",
+            wrong: "Incorrect. The correct date is September 18, 2020 when daily cases peaked at 627,316."
+        },
+        q2: {
+            correct: "Correct! Death peaks typically lag behind case peaks by 1–3 weeks due to disease progression.",
+            wrong: "Incorrect. Death peaks typically lag behind case peaks by 1–3 weeks due to the time between infection and fatality."
+        },
+        q3: {
+            correct: "Correct! Population density, mobility patterns, and healthcare access were the primary factors driving hotspot formation.",
+            wrong: "Incorrect. Population density, mobility, and healthcare access were the main contributing factors."
+        },
+        q4: {
+            correct: "Correct! Higher vaccination coverage correlated with reduced case severity and hospitalizations.",
+            wrong: "Incorrect. Data shows higher vaccination coverage correlated with reduced case severity."
+        },
+        q5: {
+            correct: "Correct! India reported over 93,000 daily new cases at its peak.",
+            wrong: "Incorrect. India reported the highest daily new case count of over 93,000."
+        },
+        q6: {
+            correct: "Correct! Case Fatality Rate (CFR) = (Total Deaths ÷ Total Confirmed Cases) × 100.",
+            wrong: "Incorrect. CFR measures the percentage of confirmed COVID-19 cases that resulted in death."
+        }
+    };
+
+    // =========================================================================
+    // SUBMIT QUIZ
+    // =========================================================================
+
+    const submitBtn = document.getElementById('submitQuiz');
+    const resetBtn = document.getElementById('resetQuiz');
+
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function() {
+
+            let score = 0;
+            const total = 6;
+            let allAnswered = true;
+
+            for (let i = 1; i <= total; i++) {
+                const qName = 'q' + i;
+                const userAnswer = document.querySelector('input[name="' + qName + '"]:checked');
+                const feedbackEl = document.getElementById(qName + 'Feedback');
+
+                if (!userAnswer) {
+                    allAnswered = false;
+                    feedbackEl.className = "mt-2 ps-5 small fw-semibold text-danger";
+                    feedbackEl.innerHTML = "<i class='fa-solid fa-circle-exclamation me-1'></i> Please select an answer.";
+                } else if (userAnswer.value === correctAnswers[qName]) {
+                    score++;
+                    feedbackEl.className = "mt-2 ps-5 small fw-semibold text-success";
+                    feedbackEl.innerHTML = "<i class='fa-solid fa-circle-check me-1'></i> " + explanations[qName].correct;
+                } else {
+                    feedbackEl.className = "mt-2 ps-5 small fw-semibold text-danger";
+                    feedbackEl.innerHTML = "<i class='fa-solid fa-circle-xmark me-1'></i> " + explanations[qName].wrong;
+                }
+            }
+
+            // Show score if all answered
+            if (allAnswered) {
+                const scoreText = document.getElementById('quizScoreText');
+                const feedbackText = document.getElementById('quizFeedbackText');
+                const resultDiv = document.getElementById('quizResult');
+                const scoreCircle = document.getElementById('scoreCircle');
+                const scoreValue = document.getElementById('scoreValue');
+
+                scoreText.innerText = 'Score: ' + score + ' / ' + total;
+                scoreValue.innerText = score + '/' + total;
+
+                // Set circle color class
+                scoreCircle.className = 'score-circle';
+                if (score === total) {
+                    scoreCircle.classList.add('perfect');
+                    feedbackText.innerHTML = "<strong>🎉 Outstanding!</strong> You've mastered all the COVID-19 data visualizations.";
+                } else if (score >= 4) {
+                    scoreCircle.classList.add('good');
+                    feedbackText.innerHTML = "<strong>👏 Well done!</strong> You have a strong understanding. Review the missed questions above.";
+                } else if (score >= 2) {
+                    scoreCircle.classList.add('avg');
+                    feedbackText.innerHTML = "<strong>📊 Keep learning!</strong> Review the visualizations above to improve your score.";
+                } else {
+                    scoreCircle.classList.add('low');
+                    feedbackText.innerHTML = "Study the 6 visualization sections above and try again for a better score.";
+                }
+
+                resultDiv.classList.remove('d-none');
+                resetBtn.classList.remove('d-none');
+
+                // Scroll to result
+                setTimeout(function() {
+                    resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 200);
+            }
+        });
+    }
+
+    // =========================================================================
+    // RESET QUIZ
+    // =========================================================================
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            document.getElementById('quizForm').reset();
+
+            for (let i = 1; i <= 6; i++) {
+                document.getElementById('q' + i + 'Feedback').innerHTML = '';
+            }
+
+            document.getElementById('quizResult').classList.add('d-none');
+            resetBtn.classList.add('d-none');
+
+            // Scroll back to quiz top
+            document.querySelector('.quiz-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
+
+});
+</script>
+
+<!-- Include Chart.js and custom analysis charts script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
+
+{% endblock %}
