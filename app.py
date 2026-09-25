@@ -76,28 +76,31 @@ LOGS_DIR = os.path.join(BASE_DIR, "logs")
 # LOGGING CONFIGURATION
 # =============================================================================
 
-if not os.path.exists(LOGS_DIR):
-    os.makedirs(LOGS_DIR)
+try:
+    if not os.path.exists(LOGS_DIR):
+        os.makedirs(LOGS_DIR, exist_ok=True)
 
-file_handler = RotatingFileHandler(
-    os.path.join(LOGS_DIR, "app.log"),
-    maxBytes=10240,
-    backupCount=10
-)
-
-file_handler.setFormatter(
-    logging.Formatter(
-        "%(asctime)s %(levelname)s: %(message)s "
-        "[in %(pathname)s:%(lineno)d]"
+    file_handler = RotatingFileHandler(
+        os.path.join(LOGS_DIR, "app.log"),
+        maxBytes=10240,
+        backupCount=10
     )
-)
 
-file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s %(levelname)s: %(message)s "
+            "[in %(pathname)s:%(lineno)d]"
+        )
+    )
 
-app.logger.addHandler(file_handler)
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+except Exception as e:
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO)
+    app.logger.addHandler(stream_handler)
 
 app.logger.setLevel(logging.INFO)
-
 app.logger.info("COVID Flask Dashboard Startup")
 
 # =============================================================================
